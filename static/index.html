@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Loan Risk Check</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-blobs" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <header class="top">
+    <h1>Will this loan be repaid?</h1>
+    <p>Enter the applicant's details and the model estimates the chance of default.</p>
+  </header>
+
+  <main class="layout">
+    <!-- ============ FORM ============ -->
+    <form id="loanForm" class="card form" novalidate>
+      <div class="samples">
+        <span>Try an example</span>
+        <button type="button" class="chip" data-sample="safe">Steady borrower</button>
+        <button type="button" class="chip" data-sample="risky">Stretched borrower</button>
+      </div>
+
+      <fieldset>
+        <legend>Borrower</legend>
+        <div class="grid">
+          <label class="field">Age
+            <input type="number" name="person_age" min="18" max="100" value="30" required />
+          </label>
+          <label class="field">Yearly income (₹ / $)
+            <input type="number" name="person_income" min="1" step="1000" value="60000" required />
+          </label>
+          <label class="field">Home ownership
+            <select name="person_home_ownership">
+              <option>RENT</option><option>OWN</option><option>MORTGAGE</option><option>OTHER</option>
+            </select>
+          </label>
+          <label class="field">Years employed
+            <input type="number" name="person_emp_length" min="0" max="60" step="0.5" value="4" required />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Loan</legend>
+        <div class="grid">
+          <label class="field">Purpose
+            <select name="loan_intent">
+              <option value="PERSONAL">Personal</option>
+              <option value="EDUCATION">Education</option>
+              <option value="MEDICAL">Medical</option>
+              <option value="VENTURE">Venture</option>
+              <option value="HOMEIMPROVEMENT">Home improvement</option>
+              <option value="DEBTCONSOLIDATION">Debt consolidation</option>
+            </select>
+          </label>
+          <label class="field">Loan amount
+            <input type="number" name="loan_amnt" min="1" step="100" value="10000" required />
+          </label>
+          <label class="field wide">Interest rate: <b id="rateOut">11.0%</b>
+            <input type="range" name="loan_int_rate" min="4" max="25" step="0.1" value="11" />
+          </label>
+          <div class="field wide">
+            Loan grade
+            <div class="seg" id="gradeSeg" role="radiogroup" aria-label="Loan grade">
+              <input type="radio" name="loan_grade" id="gA" value="A" /><label for="gA">A</label>
+              <input type="radio" name="loan_grade" id="gB" value="B" checked /><label for="gB">B</label>
+              <input type="radio" name="loan_grade" id="gC" value="C" /><label for="gC">C</label>
+              <input type="radio" name="loan_grade" id="gD" value="D" /><label for="gD">D</label>
+              <input type="radio" name="loan_grade" id="gE" value="E" /><label for="gE">E</label>
+              <input type="radio" name="loan_grade" id="gF" value="F" /><label for="gF">F</label>
+              <input type="radio" name="loan_grade" id="gG" value="G" /><label for="gG">G</label>
+            </div>
+          </div>
+          <div class="field wide ratio">
+            Loan as share of income
+            <div class="bar"><i id="ratioBar"></i></div>
+            <b id="ratioOut">17%</b>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Credit history</legend>
+        <div class="grid">
+          <label class="field">Credit history (years)
+            <input type="number" name="cb_person_cred_hist_length" min="0" max="60" value="5" required />
+          </label>
+          <div class="field">
+            Past default on file
+            <div class="seg two" role="radiogroup" aria-label="Past default on file">
+              <input type="radio" name="cb_person_default_on_file" id="dN" value="N" checked /><label for="dN">No</label>
+              <input type="radio" name="cb_person_default_on_file" id="dY" value="Y" /><label for="dY">Yes</label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <button type="submit" class="go" id="submitBtn">
+        <span class="label">Check default risk</span>
+        <span class="spinner" aria-hidden="true"></span>
+      </button>
+      <p class="error" id="errorBox" role="alert" hidden></p>
+    </form>
+
+    <!-- ============ RESULT ============ -->
+    <aside class="card result" id="resultCard" aria-live="polite">
+      <svg viewBox="0 0 300 175" class="gauge" role="img" aria-label="Default probability gauge">
+        <defs>
+          <linearGradient id="gGrad" x1="0" x2="1" y1="0" y2="0">
+            <stop offset="0" stop-color="#14a38b" />
+            <stop offset="0.5" stop-color="#f2b134" />
+            <stop offset="1" stop-color="#e5483d" />
+          </linearGradient>
+        </defs>
+        <path class="track" d="M30 150 A120 120 0 0 1 270 150" />
+        <path class="fill" id="gFill" d="M30 150 A120 120 0 0 1 270 150" stroke="url(#gGrad)" />
+        <line id="gThresh" class="thresh" x1="150" y1="22" x2="150" y2="40" />
+        <g id="gNeedle" class="needle">
+          <line x1="150" y1="150" x2="150" y2="52" />
+          <circle cx="150" cy="150" r="9" />
+        </g>
+        <text x="30" y="170" class="end">0%</text>
+        <text x="270" y="170" class="end" text-anchor="end">100%</text>
+      </svg>
+
+      <div class="readout">
+        <div class="pct"><span id="pctNum">--</span><small>%</small></div>
+        <div class="verdict" id="verdict">Waiting for details</div>
+        <span class="badge" id="badge" hidden></span>
+      </div>
+
+      <dl class="facts" id="facts" hidden>
+        <div><dt>Decision cut-off</dt><dd id="thrOut">–</dd></div>
+        <div><dt>Model output</dt><dd id="classOut">–</dd></div>
+      </dl>
+      <p class="hint" id="hint">Fill in the form and press the button. The needle marks the default probability; the small tick marks the model's decision cut-off.</p>
+    </aside>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
